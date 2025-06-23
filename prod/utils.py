@@ -15,7 +15,9 @@ WEIGHTS_URL = "https://www.dropbox.com/scl/fi/9n666urcnw09xbz047e2d/cgan_checkpo
 DATASET_PATH = "../data/224x224"
 CSV_TRAIN_PATH = "../data/book30-listing-train.csv"
 ZIP_PATH = "../data/title30cat.zip"
-WEIGHTS_PATH = "../data/cgan_checkpoint.pth"
+WEIGHTS_PATH_CGAN = "./modelo_cgan.pth"
+WEIGHTS_PATH_CVAE = "./modelo_cvae.pth"
+
 
 def download_and_extract_data():
     """Downloads and extracts the dataset and CSV if they don't exist."""
@@ -34,12 +36,18 @@ def download_and_extract_data():
         urllib.request.urlretrieve(CSV_TRAIN_URL, CSV_TRAIN_PATH)
         print("CSV file downloaded.")
 
+
 def download_weights():
     """Downloads the model weights if not present."""
-    if not os.path.exists(WEIGHTS_PATH):
+    if not os.path.exists(WEIGHTS_PATH_CGAN):
         print("Downloading model weights...")
-        urllib.request.urlretrieve(WEIGHTS_URL, WEIGHTS_PATH)
+        urllib.request.urlretrieve(WEIGHTS_URL, WEIGHTS_PATH_CGAN)
         print("Weights downloaded.")
+    if not os.path.exists(WEIGHTS_PATH_CVAE):
+        print("Downloading model weights...")
+        urllib.request.urlretrieve(WEIGHTS_URL, WEIGHTS_PATH_CVAE)
+        print("Weights downloaded.")
+
 
 @st.cache_data
 def load_dataframe():
@@ -49,17 +57,21 @@ def load_dataframe():
         print("DataFrame loaded successfully.")
         return df
     except FileNotFoundError:
-        print(f"Error: {CSV_TRAIN_PATH} not found. Run download_and_extract_data() first.")
+        print(
+            f"Error: {CSV_TRAIN_PATH} not found. Run download_and_extract_data() first."
+        )
         return None
     except Exception as e:
         print(f"Error loading DataFrame: {e}")
         return None
 
+
 def obtener_id_genero(dataframe, genre_name):
     """Devuelve el índice numérico del género a partir del nombre."""
-    genres = sorted(dataframe['Category'].unique())
+    genres = sorted(dataframe["Category"].unique())
     genre_to_idx = {genre: idx for idx, genre in enumerate(genres)}
     return genre_to_idx.get(genre_name, -1)
+
 
 class Generator(nn.Module):
     def __init__(self, z_dim, genre_dim, img_channels=3, feature_g=64):
@@ -67,21 +79,26 @@ class Generator(nn.Module):
         input_dim = z_dim + genre_dim
         self.net = nn.Sequential(
             nn.ConvTranspose2d(input_dim, feature_g * 8, 4, 1, 0),
-            nn.BatchNorm2d(feature_g * 8), nn.ReLU(True),
+            nn.BatchNorm2d(feature_g * 8),
+            nn.ReLU(True),
             nn.ConvTranspose2d(feature_g * 8, feature_g * 4, 4, 2, 1),
-            nn.BatchNorm2d(feature_g * 4), nn.ReLU(True),
+            nn.BatchNorm2d(feature_g * 4),
+            nn.ReLU(True),
             nn.ConvTranspose2d(feature_g * 4, feature_g * 2, 4, 2, 1),
-            nn.BatchNorm2d(feature_g * 2), nn.ReLU(True),
+            nn.BatchNorm2d(feature_g * 2),
+            nn.ReLU(True),
             nn.ConvTranspose2d(feature_g * 2, feature_g, 4, 2, 1),
-            nn.BatchNorm2d(feature_g), nn.ReLU(True),
+            nn.BatchNorm2d(feature_g),
+            nn.ReLU(True),
             nn.ConvTranspose2d(feature_g, img_channels, 4, 2, 1),
-            nn.Tanh()
+            nn.Tanh(),
         )
 
     def forward(self, z, labels):
         x = torch.cat([z, labels], dim=1)
         x = x.unsqueeze(2).unsqueeze(3)
         return self.net(x)
+
 
 @st.cache_resource
 def load_model():
@@ -94,9 +111,10 @@ def load_model():
     G = Generator(z_dim, num_classes).to(device)
 
     checkpoint = torch.load(WEIGHTS_PATH, map_location=device)
-    G.load_state_dict(checkpoint['generator_state_dict'])
+    G.load_state_dict(checkpoint["generator_state_dict"])
     G.eval()
     return G
+
 
 def generar_por_genero(generator, genre_id, num_imgs=8):
     """Genera una lista de imágenes falsas (tensors) para un género dado."""
@@ -106,10 +124,15 @@ def generar_por_genero(generator, genre_id, num_imgs=8):
     generator.eval()
     with torch.no_grad():
         labels = torch.full((num_imgs,), genre_id, dtype=torch.long, device=device)
-        labels_one_hot = torch.nn.functional.one_hot(labels, num_classes=num_classes).float().to(device)
+        labels_one_hot = (
+            torch.nn.functional.one_hot(labels, num_classes=num_classes)
+            .float()
+            .to(device)
+        )
         z = torch.randn(num_imgs, z_dim, device=device)
         fake_imgs = generator(z, labels_one_hot).detach().cpu()
         return fake_imgs
+
 
 def normalize_individual_images(imgs):
     imgs_normalized = torch.empty_like(imgs)
