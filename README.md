@@ -1,4 +1,4 @@
-# Generador de portadas de libros con cGAN y cVAE
+# 📚 BookCoverAI - Red neuronal generadora de portadas de libros
 
 Este proyecto es una aplicación web creada con Streamlit, para mostrar un generador de portadas de libros por género. Está desarrollado con Pyhton y Pythorch. Utilizando una cVAE y una cGAN para la generación.
 
