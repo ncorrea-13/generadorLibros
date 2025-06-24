@@ -131,7 +131,9 @@ elif st.session_state.pantalla == "generador":
                 st.image(img_path, use_container_width=True)
                 st.markdown(f"<div class='image-caption'>{genre}</div>", unsafe_allow_html=True)
                 if st.button("Seleccionar", key=f"select_{start_idx + i}"):
-                    st.session_state["selected_genre"] = genre
+                  if st.session_state.get("selected_genre") != genre:
+                      st.session_state["selected_genre"] = genre
+                      st.session_state.pop("generated_imgs", None)
             else:
                 st.warning(f"Image file not found: {img_path}")
 
