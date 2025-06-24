@@ -110,7 +110,7 @@ def load_model():
     num_classes = 30
     G = Generator(z_dim, num_classes).to(device)
 
-    checkpoint = torch.load(WEIGHTS_PATH, map_location=device)
+    checkpoint = torch.load(WEIGHTS_PATH_CGAN, map_location=device)
     G.load_state_dict(checkpoint["generator_state_dict"])
     G.eval()
     return G
