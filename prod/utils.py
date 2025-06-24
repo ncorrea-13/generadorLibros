@@ -8,8 +8,6 @@ import streamlit as st
 
 # URLs del dataset y pesos
 DATASET_ZIP_URL = "https://www.dropbox.com/scl/fi/buygp1u3dlvql1omlgii6/title30cat.zip?rlkey=emlr8c439whnexhezqjanlr19&st=58w2deja&dl=1"
-CSV_TRAIN_URL = "https://www.dropbox.com/scl/fi/b28fi1cd6k4vtaj0en1lu/book30-listing-train.csv?rlkey=dd4lrdkoleiedezjzx9ing1yb&st=jwcx2hys&dl=1"
-WEIGHTS_URL = "https://www.dropbox.com/scl/fi/9n666urcnw09xbz047e2d/cgan_checkpoint.pth?rlkey=3y6zhkq380ndayxpo0h2i0fxq&st=m492m9qb&dl=1"
 
 # Paths
 DATASET_PATH = "../data/224x224"
@@ -30,23 +28,6 @@ def download_and_extract_data():
             zip_ref.extractall("../data")
         os.remove(ZIP_PATH)
         print("Dataset downloaded and extracted.")
-
-    if not os.path.exists(CSV_TRAIN_PATH):
-        print("Downloading CSV file...")
-        urllib.request.urlretrieve(CSV_TRAIN_URL, CSV_TRAIN_PATH)
-        print("CSV file downloaded.")
-
-
-def download_weights():
-    """Downloads the model weights if not present."""
-    if not os.path.exists(WEIGHTS_PATH_CGAN):
-        print("Downloading model weights...")
-        urllib.request.urlretrieve(WEIGHTS_URL, WEIGHTS_PATH_CGAN)
-        print("Weights downloaded.")
-    if not os.path.exists(WEIGHTS_PATH_CVAE):
-        print("Downloading model weights...")
-        urllib.request.urlretrieve(WEIGHTS_URL, WEIGHTS_PATH_CVAE)
-        print("Weights downloaded.")
 
 
 @st.cache_data
@@ -103,7 +84,6 @@ class Generator(nn.Module):
 @st.cache_resource
 def load_model():
     """Loads the generator with pretrained weights."""
-    download_weights()
 
     device = torch.device("cpu")
     z_dim = 100
