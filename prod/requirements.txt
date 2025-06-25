@@ -5,3 +5,5 @@ torchvision
 numpy
 requests
 Pillow
+urllib3
+typing-extensions
