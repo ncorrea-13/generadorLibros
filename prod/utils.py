@@ -14,8 +14,8 @@ DATASET_PATH = os.path.join("..", "data", "224x224")
 CSV_TRAIN_PATH = os.path.join("..", "data", "book30-listing-train.csv")
 ZIP_PATH = os.path.join("..", "data", "title30cat.zip")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-WEIGHTS_PATH_CGAN = os.path.join(BASE_DIR, "prod", "modelo_cgan.pth")
-WEIGHTS_PATH_CVAE = os.path.join(BASE_DIR, "prod", "modelo_cvae.pth")
+WEIGHTS_PATH_CGAN = os.path.join(BASE_DIR, "modelo_cgan.pth")
+WEIGHTS_PATH_CVAE = os.path.join(BASE_DIR, "modelo_cvae.pth")
 
 
 def download_and_extract_data():
