@@ -10,11 +10,12 @@ import streamlit as st
 DATASET_ZIP_URL = "https://www.dropbox.com/scl/fi/buygp1u3dlvql1omlgii6/title30cat.zip?rlkey=emlr8c439whnexhezqjanlr19&st=58w2deja&dl=1"
 
 # Paths
-DATASET_PATH = "../data/224x224"
-CSV_TRAIN_PATH = "../data/book30-listing-train.csv"
-ZIP_PATH = "../data/title30cat.zip"
-WEIGHTS_PATH_CGAN = "prod/modelo_cgan.pth"
-WEIGHTS_PATH_CVAE = "prod/modelo_cvae.pth"
+DATASET_PATH = os.path.join("..", "data", "224x224")
+CSV_TRAIN_PATH = os.path.join("..", "data", "book30-listing-train.csv")
+ZIP_PATH = os.path.join("..", "data", "title30cat.zip")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+WEIGHTS_PATH_CGAN = os.path.join(BASE_DIR, "prod", "modelo_cgan.pth")
+WEIGHTS_PATH_CVAE = os.path.join(BASE_DIR, "prod", "modelo_cvae.pth")
 
 
 def download_and_extract_data():
