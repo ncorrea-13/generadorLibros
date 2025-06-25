@@ -3,13 +3,15 @@ import pandas as pd
 import os
 import random
 from utils import (
-    download_and_extract_data,
-    load_dataframe,
-    DATASET_PATH,
-    obtener_id_genero,
-    load_model,
-    generar_por_genero,
-    normalize_individual_images,
+download_and_extract_data,
+load_dataframe,
+DATASET_PATH,
+obtener_id_genero,
+load_model_cgan,
+generar_por_genero_cgan,
+normalize_individual_images,
+load_model_cvae,
+generar_por_genero_cvae
 )
 
 # ---------- Estilos comunes ----------
@@ -52,7 +54,8 @@ st.markdown(
 # ---------- Carga inicial ----------
 download_and_extract_data()
 df = load_dataframe()
-generator = load_model()
+cGAN_generator = load_model_cgan()
+cVAE = load_model_cvae()
 GENRES = df["Category"].unique()
 
 if "pantalla" not in st.session_state:
@@ -73,18 +76,16 @@ if st.session_state.pantalla != "inicio":
 
 # ---------- Pantalla de Inicio ----------
 if st.session_state.pantalla == "inicio":
+
     # ---------- Estilos del Inicio ----------
-    st.markdown(
-        """
+    st.markdown("""
         <style>
             .stApp {
                 background-image: url("https://image.made-in-china.com/202f0j00MCpROtwEEJbh/Deep-Dark-Brown-High-Quality-with-IXPE-Wood-Texture-Spc-Flooring-3-5-6mm.webp");
                 background-size: cover;
             }
         </style>
-    """,
-        unsafe_allow_html=True,
-    )
+    """, unsafe_allow_html=True)
 
     st.title("📚 BookCoverAI - Creatividad y Juego con IA")
     st.markdown("""
@@ -105,18 +106,16 @@ if st.session_state.pantalla == "inicio":
 
 # ---------- Generador de Portadas ----------
 elif st.session_state.pantalla == "generador":
+
     # ---------- Estilos del Generador ----------
-    st.markdown(
-        """
+    st.markdown("""
         <style>
             .stApp {
                 background-image: url("https://www.transparenttextures.com/patterns/white-wall.png");
                 background-size: cover;
             }
         </style>
-    """,
-        unsafe_allow_html=True,
-    )
+    """, unsafe_allow_html=True)
 
     st.title("🎨 Generador de Portadas de Libro")
     IMAGES_PER_PAGE = 15
@@ -125,7 +124,7 @@ elif st.session_state.pantalla == "generador":
     if "page_number" not in st.session_state:
         st.session_state.page_number = 0
 
-    if "samples" not in st.session_state:
+    if 'samples' not in st.session_state:
         genres = df["Category"].unique()
         rows = [df[df["Category"] == genre].sample(1).iloc[0] for genre in genres]
         st.session_state.samples = pd.DataFrame(rows)
@@ -144,13 +143,11 @@ elif st.session_state.pantalla == "generador":
         with cols[i % IMAGES_PER_ROW]:
             if os.path.exists(img_path):
                 st.image(img_path, use_container_width=True)
-                st.markdown(
-                    f"<div class='image-caption'>{genre}</div>", unsafe_allow_html=True
-                )
+                st.markdown(f"<div class='image-caption'>{genre}</div>", unsafe_allow_html=True)
                 if st.button("Seleccionar", key=f"select_{start_idx + i}"):
-                    if st.session_state.get("selected_genre") != genre:
-                        st.session_state["selected_genre"] = genre
-                        st.session_state.pop("generated_imgs", None)
+                  if st.session_state.get("selected_genre") != genre:
+                      st.session_state["selected_genre"] = genre
+                      st.session_state.pop("generated_imgs", None)
             else:
                 st.warning(f"Image file not found: {img_path}")
 
@@ -169,10 +166,17 @@ elif st.session_state.pantalla == "generador":
     if "selected_genre" in st.session_state:
         st.success(f"Género seleccionado: {st.session_state.selected_genre}")
         genre_id = obtener_id_genero(df, st.session_state.selected_genre)
+
         if genre_id != -1:
-            cant_images = st.slider("Indique la cantidad de imágenes a generar:", 1, 12)
+            cant_images = st.number_input("Indique la cantidad de imágenes a generar:", min_value=1, max_value=12, step=1, value=1)
+            modelo_seleccionado = st.selectbox("Seleccione el generador a utilizar:", ["CGAN", "CVAE"])
+
             if st.button("🎨 Generar Imágenes"):
-                imgs = generar_por_genero(generator, genre_id, cant_images)
+                if modelo_seleccionado == "CGAN":
+                    imgs = generar_por_genero_cgan(cGAN_generator, genre_id, cant_images)
+                else:
+                    imgs = generar_por_genero_cvae(cVAE, genre_id, cant_images)
+
                 imgs = normalize_individual_images(imgs)
                 st.session_state.generated_imgs = imgs
 
@@ -183,25 +187,20 @@ elif st.session_state.pantalla == "generador":
             with cols[i % 4]:
                 img = img.permute(1, 2, 0).numpy()
                 st.image(img, use_container_width=True)
-                st.markdown(
-                    f"<div class='image-caption'>Imagen {i + 1}</div>",
-                    unsafe_allow_html=True,
-                )
+                st.markdown(f"<div class='image-caption'>Imagen {i+1}</div>", unsafe_allow_html=True)
 
 # ---------- Juego: Adiviná el Género ----------
 elif st.session_state.pantalla == "juego":
+
     # ---------- Estilos del Juego ----------
-    st.markdown(
-        """
+    st.markdown("""
         <style>
             .stApp {
                 background-image: url("https://img.freepik.com/vector-gratis/fondo-abstracto-diseno-estilo-pixel-oscuro_1048-15775.jpg?semt=ais_hybrid&w=740");
                 background-size: cover;
             }
         </style>
-    """,
-        unsafe_allow_html=True,
-    )
+    """, unsafe_allow_html=True)
 
     st.title("❓ Adiviná el Género del Libro")
 
@@ -215,10 +214,10 @@ elif st.session_state.pantalla == "juego":
         st.session_state.juego_finalizado = False
 
     if not st.session_state.juego_en_progreso:
-        st.subheader("Seleccioná la dificultad para comenzar:")
-        dificultad = st.radio(
-            "Dificultad", ["Fácil", "Media", "Difícil"], key="juego_dificultad"
-        )
+        st.subheader("Seleccioná la dificultad y el generador para comenzar:")
+        dificultad = st.radio("Seleccione la dificultad deseada:", ["Fácil", "Media", "Difícil"], key="juego_dificultad")
+
+        modelo_juego = st.selectbox("Seleccione el generador a utilizar para generar las imágenes:", ["CGAN", "CVAE"], key="juego_modelo")
 
         if dificultad == "Fácil":
             st.session_state.juego_cant_opciones = 3
@@ -234,26 +233,23 @@ elif st.session_state.pantalla == "juego":
             st.session_state.juego_finalizado = False
             st.session_state.reiniciar_juego = True
             st.rerun()
-
     else:
         st.markdown(f"**Ronda {st.session_state.juego_ronda_actual} de 10**")
 
         # Mostrar puntaje actual antes de responder
-        st.markdown(
-            f"**Puntaje actual: {st.session_state.juego_puntaje} / {st.session_state.juego_ronda_actual}**"
-        )
+        st.markdown(f"**Puntaje actual: {st.session_state.juego_puntaje} / {st.session_state.juego_ronda_actual}**")
 
-        if "juego_imgs" not in st.session_state or st.session_state.get(
-            "reiniciar_juego"
-        ):
+        if "juego_imgs" not in st.session_state or st.session_state.get("reiniciar_juego"):
             genero_correcto = random.choice(GENRES)
             genero_id = obtener_id_genero(df, genero_correcto)
-            imgs = generar_por_genero(generator, genero_id, 4)
+            if st.session_state.get("juego_modelo") == "CGAN":
+                imgs = generar_por_genero_cgan(cGAN_generator, genero_id, 4)
+            else:
+                imgs = generar_por_genero_cvae(cVAE, genero_id, 4)
             imgs = normalize_individual_images(imgs)
-
             cantidad_opciones = st.session_state.get("juego_cant_opciones", 4)
-
             opciones = [genero_correcto]
+
             while len(opciones) < cantidad_opciones:
                 gen = random.choice(GENRES)
                 if gen not in opciones:
@@ -273,21 +269,18 @@ elif st.session_state.pantalla == "juego":
             with cols[i % 4]:
                 img = img.permute(1, 2, 0).numpy()
                 st.image(img, use_container_width=True)
-                st.markdown(
-                    f"<div class='image-caption'>Portada {i + 1}</div>",
-                    unsafe_allow_html=True,
-                )
+                st.markdown(f"<div class='image-caption'>Portada {i+1}</div>", unsafe_allow_html=True)
 
         respuesta = st.radio(
             "¿Cuál creés que es el género de estas portadas?",
             st.session_state.juego_opciones,
             key=f"juego_radio_{st.session_state.juego_ronda_actual}",
-            disabled=st.session_state.juego_resultado is not None,
+            disabled=st.session_state.juego_resultado is not None
         )
 
         if st.button("Responder") and st.session_state.juego_resultado is None:
             st.session_state.juego_respuesta_usuario = respuesta
-            correcto = respuesta == st.session_state.juego_respuesta_correcta
+            correcto = (respuesta == st.session_state.juego_respuesta_correcta)
             st.session_state.juego_resultado = correcto
             if correcto:
                 st.session_state.juego_puntaje += 1
@@ -297,14 +290,10 @@ elif st.session_state.pantalla == "juego":
             if st.session_state.juego_resultado:
                 st.success("✅ ¡Correcto!")
             else:
-                st.error(
-                    f"❌ Incorrecto. La respuesta correcta era: {st.session_state.juego_respuesta_correcta}"
-                )
+                st.error(f"❌ Incorrecto. La respuesta correcta era: {st.session_state.juego_respuesta_correcta}")
 
             # Puntaje parcial (luego de responder)
-            st.markdown(
-                f"**Puntaje actual: {st.session_state.juego_puntaje} / {st.session_state.juego_ronda_actual}**"
-            )
+            st.markdown(f"**Puntaje actual: {st.session_state.juego_puntaje} / {st.session_state.juego_ronda_actual}**")
 
             col1, col2 = st.columns(2)
             with col1:
@@ -327,9 +316,7 @@ elif st.session_state.pantalla == "juego":
                     st.rerun()
 
         if st.session_state.juego_finalizado:
-            st.success(
-                f"🎉 Juego terminado. Puntaje final: {st.session_state.juego_puntaje} / 10"
-            )
+            st.success(f"🎉 Juego terminado. Puntaje final: {st.session_state.juego_puntaje} / 10")
             if st.button("🔄 Volver a Jugar"):
                 for key in list(st.session_state.keys()):
                     if key.startswith("juego_"):
