@@ -13,8 +13,8 @@ DATASET_ZIP_URL = "https://www.dropbox.com/scl/fi/buygp1u3dlvql1omlgii6/title30c
 DATASET_PATH = "../data/224x224"
 CSV_TRAIN_PATH = "../data/book30-listing-train.csv"
 ZIP_PATH = "../data/title30cat.zip"
-WEIGHTS_PATH_CGAN = "./modelo_cgan.pth"
-WEIGHTS_PATH_CVAE = "./modelo_cvae.pth"
+WEIGHTS_PATH_CGAN = "prod/modelo_cgan.pth"
+WEIGHTS_PATH_CVAE = "prod/modelo_cvae.pth"
 
 
 def download_and_extract_data():
