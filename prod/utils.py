@@ -16,6 +16,7 @@ CSV_TRAIN_PATH = os.path.join(BASE_DIR, "..", "data", "book30-listing-train.csv"
 ZIP_PATH = os.path.join(BASE_DIR, "..", "data", "title30cat.zip")
 WEIGHTS_PATH_CGAN = os.path.join(BASE_DIR, "modelo_cgan.pth")
 WEIGHTS_PATH_CVAE = os.path.join(BASE_DIR, "modelo_cvae.pth")
+EXTRACT_PATH = os.path.join(BASE_DIR, "..", "data")
 
 
 def download_and_extract_data():
@@ -26,7 +27,7 @@ def download_and_extract_data():
         print("Downloading and extracting dataset...")
         urllib.request.urlretrieve(DATASET_ZIP_URL, ZIP_PATH)
         with ZipFile(ZIP_PATH, "r") as zip_ref:
-            zip_ref.extractall("../data")
+            zip_ref.extractall(EXTRACT_PATH)
         os.remove(ZIP_PATH)
         print("Dataset downloaded and extracted.")
 
