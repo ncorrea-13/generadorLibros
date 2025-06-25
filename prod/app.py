@@ -232,6 +232,7 @@ elif st.session_state.pantalla == "juego":
             st.session_state.juego_puntaje = 0
             st.session_state.juego_finalizado = False
             st.session_state.reiniciar_juego = True
+            st.session_state.juego_modelo_seleccionado = modelo_juego
             st.rerun()
     else:
         st.markdown(f"**Ronda {st.session_state.juego_ronda_actual} de 10**")
@@ -242,7 +243,8 @@ elif st.session_state.pantalla == "juego":
         if "juego_imgs" not in st.session_state or st.session_state.get("reiniciar_juego"):
             genero_correcto = random.choice(GENRES)
             genero_id = obtener_id_genero(df, genero_correcto)
-            if st.session_state.get("juego_modelo") == "CGAN":
+            modelo = st.session_state.get("juego_modelo_seleccionado", "CGAN")
+            if modelo == "CGAN":
                 imgs = generar_por_genero_cgan(cGAN_generator, genero_id, 4)
             else:
                 imgs = generar_por_genero_cvae(cVAE, genero_id, 4)
